@@ -1,0 +1,31 @@
+#! /usr/bin/env sh
+
+echo Writing NPM_TOKEN passed into container as environmental variable
+echo into ~/.npmrc
+echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > ~/.npmrc
+echo
+
+echo Retrieving package name from package.json.
+PACKAGE_NAME=`cat /app/package.json | grep name | cut -d '"' -f 4`
+echo Name retrieval successful.
+echo
+
+echo Retrieving current published version of this package from the npm registry.
+CURRENT_VERSION=`npm view $PACKAGE_NAME version`
+echo Version retrieval successful. Current version is $CURRENT_VERSION.
+echo
+
+echo Setting local package version to match version in registry.
+echo NOTE: This will create a new commit, tagging this repo with v$CURRENT_VERSION.
+echo Git working directory must be clean, and may not already have an existing tag identical to v$CURRENT_VERSION.
+echo
+npm version --allow-same-version --prefix /app/ $CURRENT_VERSION
+echo Local package.json reflects published package version.
+
+echo Updating package version by one patch decimal
+npm version --prefix /app/ patch
+echo
+
+echo Publishing package to npm registry
+npm --prefix /app/ publish
+echo Success
